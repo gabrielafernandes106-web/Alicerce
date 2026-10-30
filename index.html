@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finanças do Casal 💕</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    window.createClient = createClient;
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#16365c',
+            secondary: '#0d9488',
+            success: '#22c55e',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+            neutral: '#f1f5f9'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { background-color: #f8fafc; }
+    .card { @apply bg-white rounded-xl shadow-sm border border-gray-100 p-5; }
+    .nav-item { @apply flex flex-col items-center gap-1 text-gray-500 text-xs; }
+    .nav-item.active { @apply text-primary font-medium; }
+    .page { display: none; }
+    .page.active { display: block; }
+    input, select, textarea { @apply border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary/50; }
+    button.primary { @apply bg-primary text-white py-2 px-4 rounded-lg font-medium hover:bg-primary/90 transition; }
+    button.secondary { @apply bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 transition; }
+  </style>
+</head>
+<body class="pb-24 min-h-screen">
+
+  <!-- ===================================== -->
+  <!-- CONFIGURAÇÕES DO SUPABASE — EDITE AQUI -->
+  <!-- ===================================== -->
+  <script>
+    // 👇 COLOQUE SUAS CREDENCIAIS ABAIXO SE FOR USAR NUVEM 👇
+    const SUPABASE_URL = "COLOQUE_SUA_URL_AQUI";
+    const SUPABASE_ANON_KEY = "COLOQUE_SUA_CHAVE_ANON_AQUI";
+  </script>
+
+  <!-- TELA DE LOGIN -->
+  <div id="pagina-login" class="page active">
+    <div class="flex items-center justify-center min-h-screen px-4" style="background: linear-gradient(135deg, #1e3a5f 0%, #2c5364 100%);">
+      <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+        <div class="text-center mb-8">
+          <i class="fa fa-heart text-4xl text-primary mb-3"></i>
+          <h1 class="text-2xl font-bold text-gray-800">Finanças do Casal</h1>
+          <p class="text-gray-500">Gabriela & Bruno 💕</p>
+        </div>
+        <div class="space-y-4">
+          <button onclick="entrar('gabriela')" class="w-full py-4 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition flex items-center justify-center gap-3">
+            <i class="fa fa-user-circle-o"></i> Entrar como Gabriela
+          </button>
+          <button onclick="entrar('bruno')" class="w-full py-4 bg-secondary text-white rounded-xl font-semibold hover:bg-secondary/90 transition flex items-center justify-center gap-3">
+            <i class="fa fa-user-circle-o"></i> Entrar como Bruno
+          </button>
+        </div>
+        <p class="text-center text-gray-400 text-sm mt-8">Selecione quem está acessando</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELA PRINCIPAL: DASHBOARD -->
+  <div id="pagina-dashboard" class="page">
+    <header class="bg-primary text-white py-5 px-5 rounded-b-2xl shadow-lg">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-xl font-bold">💰 Visão Geral</h1>
+          <p class="text-blue-200 text-sm" id="mesAtual"></p>
+        </div>
+        <button onclick="sair()" class="text-blue-200 hover:text-white">
+          <i class="fa fa-sign-out fa-lg"></i>
+        </button>
+      </div>
+    </header>
+
+    <main class="px-4 mt-6 space-y-6">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="card">
+          <p class="text-gray-500 text-sm">Renda Fixa</p>
+          <p class="text-xl font-bold text-primary" id="rendaFixa">R$ 0,00</p>
+        </div>
+        <div class="card">
+          <p class="text-gray-500 text-sm">Rendas Extras</p>
+          <p class="text-xl font-bold text-secondary" id="rendaExtra">R$ 0,00</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-3">💸 Despesas Familiares</h2>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-gray-500">Pagas</p>
+            <p class="text-lg font-bold text-success" id="despesasPagas">R$ 0,00</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">Pendentes</p>
+            <p class="text-lg font-bold text-warning" id="despesasPendentes">R$ 0,00</p>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t">
+          <p class="text-sm text-gray-500">Total Previsto</p>
+          <p class="text-lg font-bold text-gray-700" id="totalDespesas">R$ 0,00</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-3">🏦 Patrimônio</h2>
+        <div class="space-y-3">
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span>Caixinhas</span>
+              <span class="font-bold text-primary" id="totalCaixinha">R$ 0,00</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-primary h-2 rounded-full transition-all duration-500" id="barraCaixinha" style="width: 0%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span>Investimentos</span>
+              <span class="font-bold text-secondary" id="totalInvestimentos">R$ 0,00</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-secondary h-2 rounded-full transition-all duration-500" id="barraInvestimentos" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-gradient-to-r from-green-50 to-emerald-50 border-green-200" id="cardEconomia" style="display: none;">
+        <h2 class="font-semibold text-green-800 mb-2">✨ Dinheiro Desbloqueado!</h2>
+        <p class="text-green-700 text-sm" id="textoEconomia"></p>
+        <div class="mt-2 flex gap-2 text-sm flex-wrap">
+          <span class="bg-green-100 text-green-800 px-2 py-1 rounded" id="valorReservaSugestao">—</span>
+          <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded" id="valorLivreSugestao">—</span>
+        </div>
+        <button onclick="confirmarEconomia()" class="mt-3 primary text-sm">Confirmar Distribuição</button>
+      </div>
+
+      <div class="card bg-primary text-white">
+        <h2 class="text-sm text-blue-200 mb-1">💵 Saldo Livre para Distribuir</h2>
+        <p class="text-3xl font-bold" id="saldoLivre">R$ 0,00</p>
+        <p class="text-blue-200 text-sm mt-1">R$ <span id="valorIndividual">0,00</span> para cada um</p>
+      </div>
+
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-3">📊 Distribuição</h2>
+        <div class="h-64">
+          <canvas id="grafico"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-3">📅 Próximos Vencimentos</h2>
+        <div id="listaVencimentos" class="space-y-2">
+          <p class="text-gray-400 text-sm">Nenhuma conta pendente</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- TELA: RECEITAS -->
+  <div id="pagina-receitas" class="page">
+    <header class="bg-primary text-white py-5 px-5 rounded-b-2xl shadow-lg">
+      <h1 class="text-xl font-bold">💰 Receitas</h1>
+      <p class="text-blue-200 text-sm">Salários e rendas extras</p>
+    </header>
+    <main class="px-4 mt-6 space-y-6">
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-4">💼 Salários Fixos</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm text-gray-500">Salário Líquido — Gabriela</label>
+            <input type="number" step="0.01" id="salario-gabriela" placeholder="R$ 0,00" class="mt-1">
+          </div>
+          <div>
+            <label class="text-sm text-gray-500">Salário Líquido — Bruno</label>
+            <input type="number" step="0.01" id="salario-bruno" placeholder="R$ 0,00" class="mt-1">
+          </div>
+          <button onclick="salvarSalarios()" class="primary w-full">Salvar Salários</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-4">🎁 Rendas Extras</h2>
+        <div class="space-y-3 mb-4">
+          <div>
+            <label class="text-sm text-gray-500">Descrição</label>
+            <input type="text" id="extra-descricao" placeholder="Ex: Comissão, bônus..." class="mt-1">
+          </div>
+          <div>
+            <label class="text-sm text-gray-500">Valor</label>
+            <input type="number" step="0.01" id="extra-valor" placeholder="R$ 0,00" class="mt-1">
+          </div>
+          <div>
+            <label class="text-sm text-gray-500">Quem recebeu</label>
+            <select id="extra-quem" class="mt-1">
+              <option value="gabriela">Gabriela</option>
+              <option value="bruno">Bruno</option>
+            </select>
+          </div>
+          <button onclick="adicionarRendaExtra()" class="primary w-full">Adicionar Renda Extra</button>
+        </div>
+        <div id="lista-extras" class="space-y-2 mt-4">
+          <p class="text-gray-400 text-sm">Nenhuma renda extra cadastrada</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- TELA: DESPESAS -->
+  <div id="pagina-despesas" class="page">
+    <header class="bg-primary text-white py-5 px-5 rounded-b-2xl shadow-lg">
+      <h1 class="text-xl font-bold">📝 Despesas Familiares</h1>
+      <p class="text-blue-200 text-sm">Contas compartilhadas da família</p>
+    </header>
+    <main class="px-4 mt-6 space-y-6">
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-4">➕ Nova Despesa</h2>
+        <div class="space-y-3">
+          <div>
+            <label class="text-sm text-gray-500">Nome</label>
+            <input type="text" id="despesa-nome" placeholder="Ex: Aluguel" class="mt-1">
+          </div>
+          <div>
+            <label class="text-sm text-gray-500">Categoria</label>
+            <select id="despesa-categoria" class="mt-1">
+              <option value="Moradia">🏠 Moradia</option>
+              <option value="Utilidades">💡 Água / Energia / Internet</option>
+              <option value="Mercado">🛒 Mercado</option>
+              <option value="Crianças">👶 Crianças (Arthur e Cecília)</option>
+              <option value="Transporte">🚗 Transporte</option>
+              <option value="Saúde">💊 Saúde</option>
+              <option value="Lazer">🎉 Lazer</option>
+              <option value="Outros">📦 Outros</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm text-gray-500">Valor Previsto</label>
+              <input type="number" step="0.01" id="despesa-valor-previsto" placeholder="R$ 0,00" class="mt-1">
+            </div>
+            <div>
+              <label class="text-sm text-gray-500">Valor Pago</label>
+              <input type="number" step="0.01" id="despesa-valor-pago" placeholder="R$ 0,00" class="mt-1">
+            </div>
+          </div>
+          <div>
+            <label class="text-sm text-gray-500">Vencimento</label>
+            <input type="date" id="despesa-vencimento" class="mt-1">
+          </div>
+          <div>
+            <label class="text-sm text-gray-500">Responsável</label>
+            <select id="despesa-responsavel" class="mt-1">
+              <option value="ambos">Ambos</option>
+              <option value="gabriela">Gabriela</option>
+              <option value="bruno">Bruno</option>
+            </select>
+          </div>
+          <button onclick="adicionarDespesa()" class="primary w-full">Adicionar Despesa</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-4">📋 Lista de Despesas</h2>
+        <div id="lista-despesas" class="space-y-3">
+          <p class="text-gray-400 text-sm">Nenhuma despesa cadastrada</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- TELA: PATRIMÔNIO E METAS -->
+  <div id="pagina-patrimonio" class="page">
+    <header class="bg-primary text-white py-5 px-5 rounded-b-2xl shadow-lg">
+      <h1 class="text-xl font-bold">🏦 Patrimônio & Metas</h1>
+      <p class="text-blue-200 text-sm">Reservas, investimentos e objetivos</p>
+    </header>
+    <main class="px-4 mt-6 space-y-6">
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-4">🎯 Meta Principal — Reserva de Emergência</h2>
+        <div class="mb-2">
+          <div class="flex justify-between text-sm mb-1">
+            <span>Progresso</span>
+            <span id="meta-reserva-texto">R$ 0,00 / R$ 6.000,00</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-success h-4 rounded-full transition-all duration-700" id="meta-reserva-barra" style="width: 0%"></div>
+          </div>
+        </div>
+        <p class="text-sm text-gray-500" id="meta-projecao">Adicione valores para ver a projeção</p>
+      </div>
+
+      <div class="card">
+        <h2 class="font-semibold text-gray-700 mb-4">💰 Aportes Mensais</h2>
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm text-gray-500">Caixinha Gabriela</label>
+              <input type="number" step="0.01" id="aporte-caixinha-g" value="300" class="mt-1">
+            </div>
+            <div>
+              <label class="text-sm text-gray-500">Caixinha Bruno</label>
+              <input type="number" step="0.01" id="aporte-caixinha-b" value="300" class="mt-1">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm text-gray-500">Investimento Gabriela</label>
+              <input type="number" step="0.01" id="aporte-inv-g" value="200" class="mt-1">
+            </div>
+            <div>
+              <label class="text-sm text-gray-500">Investimento Bruno</label>
+              <input type="number" step="0.01" id="aporte-inv-b" value="200" class="mt-1">
+            </div>
+          </div>
+          <button onclick="salvarAportes()" class="primary w-full mt-2">Salvar Aportes</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
+  <nav id="nav-bottom" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-6 flex justify-around items-center z-50 shadow-md" style="display: none;">
+    <button onclick="navegarPara('dashboard')" class="nav-item active" id="btn-nav-dashboard">
+      <i class="fa fa-home text-lg"></i>
+      <span>Geral</span>
+    </button>
+    <button onclick="navegarPara('receitas')" class="nav-item" id="btn-nav-receitas">
+      <i class="fa fa-dollar text-lg"></i>
+      <span>Receitas</span>
+    </button>
+    <button onclick="navegarPara('despesas')" class="nav-item" id="btn-nav-despesas">
+      <i class="fa fa-list-alt text-lg"></i>
+      <span>Despesas</span>
+    </button>
+    <button onclick="navegarPara('patrimonio')" class="nav-item" id="btn-nav-patrimonio">
+      <i class="fa fa-line-chart text-lg"></i>
+      <span>Metas</span>
+    </button>
+  </nav>
+
+  <!-- ===================================== -->
+  <!-- LÓGICA DE DADOS & REGRAS DE NEGÓCIO  -->
+  <!-- ===================================== -->
+  <script>
+    let supabase = null;
+    let usuarioAtivo = null;
+    let instanciaGrafico = null;
+
+    let dados = {
+      salarioGabriela: 0,
+      salarioBruno: 0,
+      extras: [],
+      despesas: [],
+      aporteCaixinhaG: 300,
+      aporteCaixinhaB: 300,
+      aporteInvG: 200,
+      aporteInvB: 200,
+      metaReserva: 6000
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (typeof window.createClient === "function" && SUPABASE_URL !== "COLOQUE_SUA_URL_AQUI") {
+        supabase = window.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+      atualizarDataCabecalho();
+    });
+
+    function atualizarDataCabecalho() {
+      const data = new Date();
+      const formatador = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' });
+      const el = document.getElementById('mesAtual');
+      if (el) el.textContent = formatador.format(data).toUpperCase();
+    }
+
+    function entrar(usuario) {
+      usuarioAtivo = usuario;
+      document.getElementById('pagina-login').classList.remove('active');
+      document.getElementById('nav-bottom').style.display = 'flex';
+      navegarPara('dashboard');
+      carregarDados();
+    }
+
+    function sair() {
+      usuarioAtivo = null;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('pagina-login').classList.add('active');
+      document.getElementById('nav-bottom').style.display = 'none';
+    }
+
+    function navegarPara(paginaId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const destino = document.getElementById(`pagina-${paginaId}`);
+      if (destino) destino.classList.add('active');
+
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      const btn = document.getElementById(`btn-nav-${paginaId}`);
+      if (btn) btn.classList.add('active');
+
+      if (paginaId === 'dashboard') {
+        recalcularTudo();
+      }
+    }
+
+    function salvarSalarios() {
+      dados.salarioGabriela = parseFloat(document.getElementById('salario-gabriela').value) || 0;
+      dados.salarioBruno = parseFloat(document.getElementById('salario-bruno').value) || 0;
+      sincronizarPersistencia();
+      alert('Salários salvos com sucesso!');
+      recalcularTudo();
+    }
+
+    function adicionarRendaExtra() {
+      const desc = document.getElementById('extra-descricao').value.trim();
+      const val = parseFloat(document.getElementById('extra-valor').value) || 0;
+      const quem = document.getElementById('extra-quem').value;
+
+      if (!desc || val <= 0) {
+        alert('Informe uma descrição e um valor válido.');
+        return;
+      }
+
+      dados.extras.push({ id: Date.now(), descricao: desc, valor: val, quem });
+      document.getElementById('extra-descricao').value = '';
+      document.getElementById('extra-valor').value = '';
+
+      renderizarExtras();
+      sincronizarPersistencia();
+      recalcularTudo();
+    }
+
+    function removerExtra(id) {
+      dados.extras = dados.extras.filter(item => item.id !== id);
+      renderizarExtras();
+      sincronizarPersistencia();
+      recalcularTudo();
+    }
+
+    function renderizarExtras() {
+      const container = document.getElementById('lista-extras');
+      if (dados.extras.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm">Nenhuma renda extra cadastrada</p>';
+        return;
+      }
+      container.innerHTML = dados.extras.map(e => `
+        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+          <div>
+            <p class="font-medium text-sm text-gray-800">${e.descricao}</p>
+            <p class="text-xs text-gray-400 capitalize">${e.quem}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="font-semibold text-sm text-secondary">${formatarMoeda(e.valor)}</span>
+            <button onclick="removerExtra(${e.id})" class="text-red-400 hover:text-red-600">
+              <i class="fa fa-trash-o"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function adicionarDespesa() {
+      const nome = document.getElementById('despesa-nome').value.trim();
+      const categoria = document.getElementById('despesa-categoria').value;
+      const previsto = parseFloat(document.getElementById('despesa-valor-previsto').value) || 0;
+      const pago = parseFloat(document.getElementById('despesa-valor-pago').value) || 0;
+      const vencimento = document.getElementById('despesa-vencimento').value;
+      const responsavel = document.getElementById('despesa-responsavel').value;
+
+      if (!nome || previsto <= 0) {
+        alert('Informe o nome da despesa e o valor previsto.');
+        return;
+      }
+
+      dados.despesas.push({
+        id: Date.now(),
+        nome,
+        categoria,
+        previsto,
+        pago,
+        vencimento,
+        responsavel
+      });
+
+      document.getElementById('despesa-nome').value = '';
+      document.getElementById('despesa-valor-previsto').value = '';
+      document.getElementById('despesa-valor-pago').value = '';
+      document.getElementById('despesa-vencimento').value = '';
+
+      renderizarDespesas();
+      sincronizarPersistencia();
+      recalcularTudo();
+    }
+
+    function removerDespesa(id) {
+      dados.despesas = dados.despesas.filter(d => d.id !== id);
+      renderizarDespesas();
+      sincronizarPersistencia();
+      recalcularTudo();
+    }
+
+    function renderizarDespesas() {
+      const container = document.getElementById('lista-despesas');
+      if (dados.despesas.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm">Nenhuma despesa cadastrada</p>';
+        return;
+      }
+      container.innerHTML = dados.despesas.map(d => {
+        const quitado = d.pago >= d.previsto && d.previsto > 0;
+        return `
+          <div class="p-3 bg-gray-50 rounded-lg border border-gray-100 flex justify-between items-center">
+            <div>
+              <p class="font-medium text-sm text-gray-800">${d.nome}</p>
+              <p class="text-xs text-gray-400">${d.categoria} • Vencimento: ${d.vencimento ? d.vencimento : 'N/A'}</p>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="text-right">
+                <p class="text-sm font-semibold ${quitado ? 'text-success' : 'text-gray-700'}">${formatarMoeda(d.previsto)}</p>
+                <p class="text-xs text-gray-400">Pago: ${formatarMoeda(d.pago)}</p>
+              </div>
+              <button onclick="removerDespesa(${d.id})" class="text-red-400 hover:text-red-600">
+                <i class="fa fa-trash-o"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function salvarAportes() {
+      dados.aporteCaixinhaG = parseFloat(document.getElementById('aporte-caixinha-g').value) || 0;
+      dados.aporteCaixinhaB = parseFloat(document.getElementById('aporte-caixinha-b').value) || 0;
+      dados.aporteInvG = parseFloat(document.getElementById('aporte-inv-g').value) || 0;
+      dados.aporteInvB = parseFloat(document.getElementById('aporte-inv-b').value) || 0;
+
+      sincronizarPersistencia();
+      alert('Aportes atualizados com sucesso!');
+      recalcularTudo();
+    }
+
+    function recalcularTudo() {
+      const rendaFixa = dados.salarioGabriela + dados.salarioBruno;
+      const rendaExtra = dados.extras.reduce((acc, cur) => acc + cur.valor, 0);
+      const receitaTotal = rendaFixa + rendaExtra;
+
+      let despesasPagas = 0;
+      let despesasPrevistas = 0;
+      let despesasPendentes = 0;
+
+      dados.despesas.forEach(d => {
+        despesasPrevistas += d.previsto;
+        despesasPagas += d.pago;
+        if (d.previsto > d.pago) {
+          despesasPendentes += (d.previsto - d.pago);
+        }
+      });
+
+      const totalCaixinhas = dados.aporteCaixinhaG + dados.aporteCaixinhaB;
+      const totalInvestimentos = dados.aporteInvG + dados.aporteInvB;
+      const totalPatrimonioAportado = totalCaixinhas + totalInvestimentos;
+
+      const saldoLivre = receitaTotal - despesasPrevistas - totalPatrimonioAportado;
+      const saldoIndividual = saldoLivre > 0 ? (saldoLivre / 2) : 0;
+
+      document.getElementById('rendaFixa').textContent = formatarMoeda(rendaFixa);
+      document.getElementById('rendaExtra').textContent = formatarMoeda(rendaExtra);
+      document.getElementById('despesasPagas').textContent = formatarMoeda(despesasPagas);
+      document.getElementById('despesasPendentes').textContent = formatarMoeda(despesasPendentes);
+      document.getElementById('totalDespesas').textContent = formatarMoeda(despesasPrevistas);
+
+      document.getElementById('totalCaixinha').textContent = formatarMoeda(totalCaixinhas);
+      document.getElementById('totalInvestimentos').textContent = formatarMoeda(totalInvestimentos);
+
+      document.getElementById('saldoLivre').textContent = formatarMoeda(saldoLivre);
+      document.getElementById('valorIndividual').textContent = formatarMoeda(saldoIndividual).replace('R$', '').trim();
+
+      verificarEconomia(despesasPrevistas, despesasPagas);
+      atualizarMetaReserva(totalCaixinhas);
+      atualizarVencimentos();
+      renderizarGrafico(despesasPrevistas, totalCaixinhas, totalInvestimentos, Math.max(0, saldoLivre));
+    }
+
+    function verificarEconomia(previsto, pago) {
+      const card = document.getElementById('cardEconomia');
+      const economia = previsto - pago;
+
+      if (pago > 0 && economia > 0) {
+        card.style.display = 'block';
+        document.getElementById('textoEconomia').textContent = `Você gastou ${formatarMoeda(economia)} a menos do que o orçado nas despesas quitadas.`;
+        document.getElementById('valorReservaSugestao').textContent = `Reserva (50%): ${formatarMoeda(economia * 0.5)}`;
+        document.getElementById('valorLivreSugestao').textContent = `Livre (50%): ${formatarMoeda(economia * 0.5)}`;
+      } else {
+        card.style.display = 'none';
+      }
+    }
+
+    function confirmarEconomia() {
+      alert('Distribuição da economia sugerida aplicada ao planejamento!');
+      document.getElementById('cardEconomia').style.display = 'none';
+    }
+
+    function atualizarMetaReserva(acumuladoMes) {
+      const percentual = Math.min(100, Math.round((acumuladoMes / dados.metaReserva) * 100));
+      document.getElementById('meta-reserva-texto').textContent = `${formatarMoeda(acumuladoMes)} / ${formatarMoeda(dados.metaReserva)}`;
+      document.getElementById('meta-reserva-barra').style.width = `${percentual}%`;
+
+      const mesesRestantes = acumuladoMes > 0 ? Math.ceil((dados.metaReserva - acumuladoMes) / acumuladoMes) : 0;
+      document.getElementById('meta-projecao').textContent = mesesRestantes > 0 
+        ? `Neste ritmo de aporte, a meta será alcançada em ~${mesesRestantes} meses.`
+        : 'Meta atingida ou aportes ainda zerados.';
+    }
+
+    function atualizarVencimentos() {
+      const pendentes = dados.despesas.filter(d => d.previsto > d.pago && d.vencimento);
+      const container = document.getElementById('listaVencimentos');
+
+      if (pendentes.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm">Nenhuma conta pendente</p>';
+        return;
+      }
+
+      container.innerHTML = pendentes.map(p => `
+        <div class="flex justify-between items-center text-sm py-1 border-b border-gray-50 last:border-0">
+          <span class="text-gray-700">${p.nome}</span>
+          <span class="text-warning font-medium">${formatarMoeda(p.previsto - p.pago)} (${p.vencimento.split('-').reverse().slice(0, 2).join('/')})</span>
+        </div>
+      `).join('');
+    }
+
+    function renderizarGrafico(despesas, caixinhas, investimentos, livre) {
+      const ctx = document.getElementById('grafico');
+      if (!ctx) return;
+
+      if (instanciaGrafico) {
+        instanciaGrafico.destroy();
+      }
+
+      instanciaGrafico = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Despesas', 'Caixinhas', 'Investimentos', 'Saldo Livre'],
+          datasets: [{
+            data: [despesas, caixinhas, investimentos, livre],
+            backgroundColor: ['#ef4444', '#16365c', '#0d9488', '#22c55e'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    }
+
+    function formatarMoeda(valor) {
+      return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function sincronizarPersistencia() {
+      localStorage.setItem('financas_casal_dados', JSON.stringify(dados));
+
+      if (supabase) {
+        supabase
+          .from('orcamento')
+          .upsert({ id: 'principal', payload: dados, atualizado_em: new Date() })
+          .then(({ error }) => {
+            if (error) console.warn('Erro ao sincronizar com Supabase:', error.message);
+          });
+      }
+    }
+
+    function carregarDados() {
+      const salvo = localStorage.getItem('financas_casal_dados');
+      if (salvo) {
+        try {
+          dados = { ...dados, ...JSON.parse(salvo) };
+          document.getElementById('salario-gabriela').value = dados.salarioGabriela || '';
+          document.getElementById('salario-bruno').value = dados.salarioBruno || '';
+          document.getElementById('aporte-caixinha-g').value = dados.aporteCaixinhaG || 300;
+          document.getElementById('aporte-caixinha-b').value = dados.aporteCaixinhaB || 300;
+          document.getElementById('aporte-inv-g').value = dados.aporteInvG || 200;
+          document.getElementById('aporte-inv-b').value = dados.aporteInvB || 200;
+
+          renderizarExtras();
+          renderizarDespesas();
+          recalcularTudo();
+        } catch (e) {
+          console.error('Falha ao processar dados locais', e);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
