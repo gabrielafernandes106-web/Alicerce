@@ -6,11 +6,6 @@
   <title>Finanças do Casal 💕</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-    window.createClient = createClient;
-  </script>
 
   <script>
     tailwind.config = {
@@ -31,17 +26,16 @@
   </script>
 
   <style>
-    body { background-color: #f8fafc; }
+    body { background-color: #f8fafc; padding-bottom: 80px; }
     .card { @apply bg-white rounded-xl shadow-sm border border-gray-100 p-5; }
     .nav-item { @apply flex flex-col items-center gap-1 text-gray-500 text-xs; }
     .nav-item.active { @apply text-primary font-medium; }
     .page { display: none; }
     .page.active { display: block; }
-    input, select, textarea { @apply border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary/50; }
+    input, select { @apply border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary/50; }
     button.primary { @apply bg-primary text-white py-2 px-4 rounded-lg font-medium hover:bg-primary/90 transition; }
     button.secondary { @apply bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 transition; }
     
-    /* Check-in animado */
     .despesa-item { @apply flex items-center justify-between p-3 rounded-lg border transition-all duration-300; }
     .despesa-item.pendente { @apply bg-white border-gray-200; }
     .despesa-item.pago { @apply bg-green-50 border-green-200; }
@@ -50,39 +44,10 @@
     .check-btn.pendente { @apply border-gray-300 bg-white hover:border-primary; }
     .check-btn.pago { @apply border-success bg-success text-white; }
     
-    /* Animação de parabéns */
-    @keyframes confetti {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(-20px) rotate(180deg); opacity: 0; }
-    }
-    .celebracao { animation: confetti 0.6s ease-out; }
-    
-    /* Incentivo suave */
-    .meta-card { @apply relative overflow-hidden; }
-    .meta-card .progress-bar { transition: width 0.8s ease-out; }
+    .progress-bar { transition: width 0.8s ease-out; }
   </style>
 </head>
-<body class="pb-24 min-h-screen">
-
-  <script>
-    // COLOQUE SUAS CREDENCIAIS DO SUPABASE AQUI
-    const SUPABASE_URL = "COLOQUE_SUA_URL_AQUI";
-    const SUPABASE_ANON_KEY = "COLOQUE_SUA_CHAVE_ANON_AQUI";
-    const MES_ATUAL = new Date().toISOString().slice(0, 7); // Formato: 2026-10
-    
-    // Inicializar cliente Supabase
-    let supabase;
-    let usuarioLogado = null;
-    
-    async function inicializarSupabase() {
-      if (SUPABASE_URL.startsWith('COLOQUE') || SUPABASE_ANON_KEY.startsWith('COLOQUE')) {
-        console.warn("⚠️ Configure suas credenciais do Supabase");
-        return;
-      }
-      supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-    inicializarSupabase();
-  </script>
+<body class="min-h-screen">
 
   <!-- TELA DE LOGIN -->
   <div id="pagina-login" class="page active">
@@ -121,35 +86,23 @@
     </header>
 
     <main class="px-4 mt-6 space-y-6">
-      <div class="grid grid-cols-2 gap-4">
-        <div class="card">
-          <p class="text-gray-500 text-sm">Renda Fixa</p>
-          <p class="text-xl font-bold text-primary" id="rendaFixa">R$ 0,00</p>
-        </div>
-        <div class="card">
-          <p class="text-gray-500 text-sm">Rendas Extras</p>
-          <p class="text-xl font-bold text-secondary" id="rendaExtra">R$ 0,00</p>
-        </div>
-      </div>
-
       <div class="card">
-        <h2 class="font-semibold text-gray-700 mb-3">💸 Despesas do Mês</h2>
+        <h2 class="font-semibold text-gray-700 mb-3">💸 Contas do Mês</h2>
         <div id="lista-despesas-resumo" class="space-y-2 mb-4">
-          <p class="text-gray-400 text-sm">Nenhuma despesa cadastrada</p>
+          <p class="text-gray-400 text-sm">Nenhuma despesa cadastrada ainda</p>
         </div>
         <div class="grid grid-cols-2 gap-4 pt-3 border-t">
           <div>
-            <p class="text-sm text-gray-500">Pagas</p>
+            <p class="text-sm text-gray-500">Pagas ✅</p>
             <p class="text-lg font-bold text-success" id="despesasPagas">R$ 0,00</p>
           </div>
           <div>
-            <p class="text-sm text-gray-500">Pendentes</p>
+            <p class="text-sm text-gray-500">Pendentes ⏳</p>
             <p class="text-lg font-bold text-warning" id="despesasPendentes">R$ 0,00</p>
           </div>
         </div>
       </div>
 
-      <!-- ✅ MENSAGEM DE PARABÉNS -- APARECE QUANDO TUDO ESTÁ PAGO -->
       <div id="mensagem-parabens" class="card bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-center py-6" style="display: none;">
         <span class="text-4xl">🎉</span>
         <h3 class="text-xl font-bold text-green-700 mt-2">Parabéns! Tudo pago! ✨</h3>
@@ -157,7 +110,7 @@
       </div>
 
       <div class="card">
-        <h2 class="font-semibold text-gray-700 mb-3">🏦 Patrimônio & Metas</h2>
+        <h2 class="font-semibold text-gray-700 mb-3">🏦 Metas</h2>
         <div class="space-y-4">
           <div>
             <div class="flex justify-between text-sm mb-1">
@@ -167,7 +120,7 @@
             <div class="w-full bg-gray-200 rounded-full h-4">
               <div id="meta-reserva-barra" class="bg-primary h-4 rounded-full progress-bar" style="width: 0%"></div>
             </div>
-            <p id="meta-reserva-incentivo" class="text-xs text-gray-500 mt-1">🎯 Vamos começar guardando R$ 600 este mês!</p>
+            <p id="meta-reserva-incentivo" class="text-xs text-gray-500 mt-1">🎯 Meta: R$ 6.000 — 3 a 6 meses de tranquilidade</p>
           </div>
           <div>
             <div class="flex justify-between text-sm mb-1">
@@ -177,24 +130,18 @@
             <div class="w-full bg-gray-200 rounded-full h-4">
               <div id="meta-inv-barra" class="bg-secondary h-4 rounded-full progress-bar" style="width: 0%"></div>
             </div>
-            <p id="meta-inv-incentivo" class="text-xs text-gray-500 mt-1">💡 Só R$ 400 e chegamos em R$ 3.000! Vamos dar um passo a mais este mês? 🚀</p>
+            <p id="meta-inv-incentivo" class="text-xs text-gray-500 mt-1">🌱 Cada R$ 100 faz diferença com o tempo!</p>
           </div>
         </div>
-      </div>
-
-      <div class="card bg-primary text-white">
-        <h2 class="text-sm text-blue-200 mb-1">💵 Saldo Livre para Distribuir</h2>
-        <p class="text-3xl font-bold" id="saldoLivre">R$ 0,00</p>
-        <p class="text-blue-200 text-sm mt-1">R$ <span id="valorIndividual">0,00</span> para cada um</p>
       </div>
     </main>
   </div>
 
-  <!-- ✅ TELA: DESPESAS -- ATUALIZADA COM RECORRÊNCIA INTELIGENTE -->
+  <!-- TELA: DESPESAS -->
   <div id="pagina-despesas" class="page">
     <header class="bg-primary text-white py-5 px-5 rounded-b-2xl shadow-lg">
       <h1 class="text-xl font-bold">📝 Despesas do Mês</h1>
-      <p class="text-blue-200 text-sm">Marque ✓ quando pagar — a qualquer momento!</p>
+      <p class="text-blue-200 text-sm">Marque ✓ quando pagar</p>
     </header>
     <main class="px-4 mt-6 space-y-6">
       <div class="card">
@@ -205,58 +152,29 @@
             <input type="text" id="despesa-nome" placeholder="Ex: Aluguel" class="mt-1">
           </div>
           <div>
-            <label class="text-sm text-gray-500">Categoria</label>
-            <select id="despesa-categoria" class="mt-1">
-              <option value="Moradia">🏠 Moradia</option>
-              <option value="Utilidades">💡 Água / Energia / Internet</option>
-              <option value="Mercado">🛒 Mercado</option>
-              <option value="Crianças">👶 Crianças</option>
-              <option value="Transporte">🚗 Transporte</option>
-              <option value="Saúde">💊 Saúde</option>
-              <option value="Lazer">🎉 Lazer</option>
-              <option value="Outros">📦 Outros</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-sm text-gray-500">Valor</label>
+            <label class="text-sm text-gray-500">Valor (R$)</label>
             <input type="number" step="0.01" id="despesa-valor" placeholder="0,00" class="mt-1">
           </div>
           <div>
             <label class="text-sm text-gray-500">Vencimento</label>
             <input type="date" id="despesa-vencimento" class="mt-1">
           </div>
-          <div>
-            <label class="text-sm text-gray-500">Responsável</label>
-            <select id="despesa-responsavel" class="mt-1">
-              <option value="ambos">Ambos</option>
-              <option value="gabriela">Gabriela</option>
-              <option value="bruno">Bruno</option>
-            </select>
-          </div>
-          
-          <!-- ✨ OPÇÃO DE RECORRÊNCIA INTELIGENTE -->
           <div class="space-y-2 pt-2">
             <p class="text-sm font-medium text-gray-600">Repetir?</p>
             <label class="flex items-center gap-2 text-sm text-gray-600">
-              <input type="radio" name="repetir" value="nao" checked>
-              Apenas este mês
+              <input type="radio" name="repetir" value="nao" checked> Apenas este mês
             </label>
             <label class="flex items-center gap-2 text-sm text-gray-600">
-              <input type="radio" name="repetir" value="sim">
-              🔁 Repete todos os meses
+              <input type="radio" name="repetir" value="sim"> 🔁 Repete todos os meses
             </label>
           </div>
-          
           <button onclick="adicionarDespesa()" class="primary w-full mt-2">Adicionar Despesa</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="font-semibold text-gray-700">📋 Lista — <span id="mes-exibicao"></span></h2>
-        </div>
-        <p class="text-sm text-gray-500 mb-3">💡 Clique na caixinha para marcar como pago ✅</p>
-        
+        <h2 class="font-semibold text-gray-700 mb-4">📋 Lista — <span id="mes-exibicao"></span></h2>
+        <p class="text-sm text-gray-500 mb-3">💡 Clique na caixinha para marcar como pago</p>
         <div id="lista-despesas" class="space-y-2">
           <p class="text-gray-400 text-sm">Nenhuma despesa cadastrada ainda</p>
         </div>
@@ -264,15 +182,14 @@
     </main>
   </div>
 
-  <!-- TELA: PATRIMÔNIO E METAS -- COM INCENTIVOS INTELIGENTES -->
+  <!-- TELA: METAS / PATRIMÔNIO -->
   <div id="pagina-patrimonio" class="page">
     <header class="bg-primary text-white py-5 px-5 rounded-b-2xl shadow-lg">
-      <h1 class="text-xl font-bold">🏦 Patrimônio & Metas</h1>
-      <p class="text-blue-200 text-sm">Acompanhe e comemore cada conquista! 🎉</p>
+      <h1 class="text-xl font-bold">🏦 Metas</h1>
+      <p class="text-blue-200 text-sm">Acompanhe cada conquista! 🎉</p>
     </header>
     <main class="px-4 mt-6 space-y-6">
-      <!-- RESERVA DE EMERGÊNCIA -->
-      <div class="card meta-card">
+      <div class="card">
         <h2 class="font-semibold text-gray-700 mb-4">🛡️ Reserva de Emergência</h2>
         <div class="space-y-3">
           <div>
@@ -296,8 +213,7 @@
         </div>
       </div>
 
-      <!-- INVESTIMENTOS -->
-      <div class="card meta-card">
+      <div class="card">
         <h2 class="font-semibold text-gray-700 mb-4">📈 Investimentos</h2>
         <div class="space-y-3">
           <div>
@@ -322,7 +238,105 @@
       </div>
 
       <button onclick="salvarPatrimonio()" class="primary w-full">💾 Salvar Valores</button>
-      
-      <!-- ✅ MENSAGEM DE INCENTIVO DINÂMICA -->
-      <div id="incentivo-card" class="card bg-gradient-to-r from-amber-50 to-yellow-50 border-yellow-200" style="display: none;">
-        <p id="texto-incentivo" class
+    </main>
+  </div>
+
+  <!-- BARRA DE NAVEGAÇÃO -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50">
+    <div class="flex justify-around">
+      <button class="nav-item" onclick="mostrarPagina('pagina-dashboard')">
+        <i class="fa fa-home text-lg"></i>
+        Início
+      </button>
+      <button class="nav-item" onclick="mostrarPagina('pagina-despesas')">
+        <i class="fa fa-list-ul text-lg"></i>
+        Despesas
+      </button>
+      <button class="nav-item" onclick="mostrarPagina('pagina-patrimonio')">
+        <i class="fa fa-bank text-lg"></i>
+        Metas
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    let despesas = [];
+    let patrimonio = { caixinhaG: 0, caixinhaB: 0, invG: 0, invB: 0 };
+    let mesAtual = new Date().toISOString().slice(0, 7);
+
+    function entrar(nome) {
+      localStorage.setItem('usuarioLogado', nome);
+      document.getElementById('pagina-login').classList.remove('active');
+      document.getElementById('pagina-dashboard').classList.add('active');
+      atualizarMesExibicao();
+      carregarDespesas();
+      carregarPatrimonio();
+      carregarPaginaInicial();
+    }
+
+    function sair() {
+      localStorage.removeItem('usuarioLogado');
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('pagina-login').classList.add('active');
+    }
+
+    function mostrarPagina(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if (id === 'pagina-despesas') renderizarDespesas();
+      if (id === 'pagina-dashboard') carregarPaginaInicial();
+      if (id === 'pagina-patrimonio') carregarPatrimonio();
+    }
+
+    function adicionarDespesa() {
+      const nome = document.getElementById('despesa-nome').value.trim();
+      const valor = parseFloat(document.getElementById('despesa-valor').value);
+      const vencimento = document.getElementById('despesa-vencimento').value;
+      const repetir = document.querySelector('input[name="repetir"]:checked').value === 'sim';
+
+      if (!nome || !valor) { alert('Preencha o nome e o valor!'); return; }
+
+      despesas.push({ id: Date.now(), nome, valor, vencimento, repetir, pago: false, mes: mesAtual });
+      salvarDespesas();
+      document.getElementById('despesa-nome').value = '';
+      document.getElementById('despesa-valor').value = '';
+      document.getElementById('despesa-vencimento').value = '';
+      document.querySelector('input[name="repetir"][value="nao"]').checked = true;
+      renderizarDespesas();
+    }
+
+    function alternarCheck(id) {
+      const d = despesas.find(x => x.id === id);
+      if (d) { d.pago = !d.pago; salvarDespesas(); renderizarDespesas(); }
+    }
+
+    function excluirDespesa(id) {
+      if (confirm('Excluir esta despesa?')) {
+        despesas = despesas.filter(x => x.id !== id);
+        salvarDespesas();
+        renderizarDespesas();
+      }
+    }
+
+    function editarValor(id) {
+      const d = despesas.find(x => x.id === id);
+      if (d) {
+        const novo = prompt('Novo valor:', d.valor);
+        if (novo && !isNaN(parseFloat(novo))) {
+          d.valor = parseFloat(novo);
+          salvarDespesas();
+          renderizarDespesas();
+        }
+      }
+    }
+
+    function renderizarDespesas() {
+      const lista = document.getElementById('lista-despesas');
+      const atual = despesas.filter(d => d.mes === mesAtual);
+      if (atual.length === 0) {
+        lista.innerHTML = '<p class="text-gray-400 text-sm">Nenhuma despesa cadastrada ainda</p>';
+        return;
+      }
+      lista.innerHTML = atual.map(d => `
+        <div class="despesa-item ${d.pago ? 'pago' : 'pendente'}">
+          <div class
